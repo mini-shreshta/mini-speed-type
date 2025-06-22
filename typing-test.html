@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Typing Test - Final Version</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 {
+      margin-bottom: 10px;
+    }
+    select, button, textarea {
+      margin: 10px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    textarea {
+      width: 600px;
+      max-width: 90%;
+      height: 100px;
+      border-radius: 6px;
+    }
+    #quote {
+      font-size: 1.1rem;
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      width: 600px;
+      max-width: 90%;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    #quote span.correct {
+      color: green;
+      font-weight: bold;
+    }
+    #quote span.incorrect {
+      color: red;
+      font-weight: bold;
+    }
+    #timer, #result {
+      font-size: 1.1rem;
+      margin-top: 10px;
+      text-align: center;
+      max-width: 700px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Typing Speed Test</h2>
+
+  <!-- Time Selection -->
+  <label for="duration">Select Duration:</label>
+  <select id="duration">
+    <option value="60">1 Minute</option>
+    <option value="120">2 Minutes</option>
+    <option value="180">3 Minutes</option>
+  </select>
+
+  <!-- Quote Area -->
+  <div id="quote">Click start to load paragraph...</div>
+
+  <!-- Typing Area -->
+  <textarea id="inputBox" placeholder="Start typing here..." disabled></textarea><br>
+
+  <!-- Buttons -->
+  <button onclick="startTest()">Start Test</button>
+  <button id="submitBtn" onclick="submitTyping()" disabled>Submit</button>
+
+  <!-- Output -->
+  <div id="timer">⏳ Time: 0s</div>
+  <div id="result"></div>
+
+  <!-- Typing Sound -->
+  <audio id="typeSound">
+    <source src="https://www.fesliyanstudios.com/play-mp3/387" type="audio/mpeg">
+  </audio>
+
+  <!-- Script -->
+  <script>
+    const inputBox = document.getElementById("inputBox");
+    const quoteEl = document.getElementById("quote");
+    const timerEl = document.getElementById("timer");
+    const resultEl = document.getElementById("result");
+    const submitBtn = document.getElementById("submitBtn");
+    const typeSound = document.getElementById("typeSound");
+
+    let currentQuote = "";
+    let timerInterval = null;
+    let timeLeft = 60;
+    let startTime = null;
+    let timerStarted = false;
+
+    inputBox.addEventListener("input", function () {
+      // Start timer on first input
+      if (!timerStarted) {
+        timerStarted = true;
+        startTime = new Date().getTime();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      // Play typing sound
+      typeSound.currentTime = 0;
+      typeSound.play();
+
+      // Compare typed text with quote
+      const input = inputBox.value;
+      const quoteChars = quoteEl.querySelectorAll("span");
+      for (let i = 0; i < quoteChars.length; i++) {
+        const char = input[i];
+        if (!char) {
+          quoteChars[i].classList.remove("correct", "incorrect");
+        } else if (char === quoteChars[i].innerText) {
+          quoteChars[i].classList.add("correct");
+          quoteChars[i].classList.remove("incorrect");
+        } else {
+          quoteChars[i].classList.add("incorrect");
+          quoteChars[i].classList.remove("correct");
+        }
+      }
+    });
+
+    function startTest() {
+      const selectedDuration = parseInt(document.getElementById("duration").value);
+      timeLeft = selectedDuration;
+      timerEl.innerText = `⏳ Time: ${timeLeft}s`;
+      currentQuote = getParagraphForTime(selectedDuration);
+      quoteEl.innerHTML = currentQuote.split("").map(c => `<span>${c}</span>`).join("");
+      inputBox.value = "";
+      inputBox.disabled = false;
+      inputBox.focus();
+      resultEl.innerHTML = "";
+      submitBtn.disabled = false;
+      timerStarted = false;
+      clearInterval(timerInterval);
+    }
+
+    function updateTimer() {
+      timerEl.innerText = `⏳ Time: ${timeLeft}s`;
+      timeLeft--;
+      if (timeLeft < 0) {
+        clearInterval(timerInterval);
+        inputBox.disabled = true;
+        submitTyping();
+      }
+    }
+
+    function getParagraphForTime(seconds) {
+      if (seconds === 60) {
+        return "Practice makes perfect. Keep trying and you will improve.";
+      } else if (seconds === 120) {
+        return "Typing helps you work faster and communicate better. With time and training, you can become a skilled typist. Start slowly and increase speed while maintaining accuracy.";
+      } else {
+        return "The ability to type accurately and quickly is an essential skill. Whether you're writing stories, emails, or code, being a fast and accurate typist will save you time and increase productivity. Practice a little each day to develop muscle memory. Use games, tests, and daily exercises to challenge yourself. Soon, you'll find yourself typing faster without thinking about each key.";
+      }
+    }
+
+    function submitTyping() {
+      clearInterval(timerInterval);
+      inputBox.disabled = true;
+      submitBtn.disabled = true;
+
+      const input = inputBox.value;
+      const wordsTyped = input.trim().split(/\s+/).filter(Boolean).length;
+      const endTime = new Date().getTime();
+      const totalTime = (endTime - startTime) / 1000;
+      const wpm = Math.round((wordsTyped / totalTime) * 60);
+
+      resultEl.innerHTML = `<strong>⏱ Time Taken:</strong> ${Math.round(totalTime)}s<br>
+                            <strong>📝 Words Typed:</strong> ${wordsTyped}<br>
+                            <strong>💨 Speed:</strong> ${wpm} WPM`;
+    }
+  </script>
+
+</body>
+</html>
